@@ -48,7 +48,13 @@ async function convertImageTo3D(imageUrl: string): Promise<string> {
   }
 
   try {
-    const imageBlob = await fetch(imageUrl).then(r => r.blob());
+    console.log(`Fetching image from URL: ${imageUrl}`);
+    const imageResponse = await fetch(imageUrl);
+    if (!imageResponse.ok) {
+      throw new Error(`Failed to fetch image. Status: ${imageResponse.status}`);
+    }
+    const imageBlob = await imageResponse.blob();
+    console.log(`Successfully fetched image and converted to blob. Size: ${imageBlob.size} bytes`);
 
     const app = await gradioClient("stabilityai/stable-fast-3d", {
       token: huggingFaceToken as `hf_${string}`
@@ -104,6 +110,12 @@ export async function POST(request: Request) {
     } else {
       console.log(`Using provided image URL: ${imageUrl}`);
     }
+
+    // --- DIAGNOSTIC: Force a static public image to test Gradio client ---
+    const diagnosticImageUrl = "https://raw.githubusercontent.com/gradio-app/gradio/main/test/test_files/bus.png";
+    console.log(`DIAGNOSTIC OVERRIDE: Using static image URL: ${diagnosticImageUrl}`);
+    imageUrl = diagnosticImageUrl;
+    // --- END DIAGNOSTIC ---
 
     // 2. Convert the image (either provided or newly generated) to a 3D model
     console.log('Converting image to 3D model...');
