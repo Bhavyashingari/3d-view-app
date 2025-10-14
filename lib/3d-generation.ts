@@ -74,7 +74,7 @@ async function generateWithStableFast3D(
     onProgress?.(20, 'Generating image with Stable Diffusion...');
     
     const imageResponse = await axios.post(
-      'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0',
+      'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2-1',
       {
         inputs: `${prompt}, 3D render, white background, product photography, high quality`,
       },
@@ -138,7 +138,7 @@ async function generateWithHunyuan3D(
     onProgress?.(20, 'Generating image for 3D conversion...');
     
     const imageResponse = await axios.post(
-      'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0',
+      'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2-1',
       {
         inputs: `${prompt}, 3D render, centered, white background`,
       },

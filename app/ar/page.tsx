@@ -34,23 +34,21 @@ function ARContent() {
     const generateModel = async () => {
       setIsGenerating(true);
       setGenerationError(null);
-      setGenerationProgress(0);
-      
-      if (promptParam) {
-        setPrompt(promptParam);
-      }
-      
+
       try {
-        const url = await generate3DModel({
-          prompt: promptParam || 'default model',
-          imageUrl: imageUrlParam || undefined,
-          onProgress: (progress, message) => {
-            setGenerationProgress(progress);
-            console.log(message);
-          },
+        const response = await fetch('/api/generate-3d', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: promptParam, imageUrl: imageUrlParam }),
         });
-        
-        setModelUrl(url);
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.details || 'Failed to generate model.');
+        }
+
+        const result = await response.json();
+        setModelUrl(result.modelUrl);
       } catch (error) {
         setGenerationError(
           error instanceof Error ? error.message : 'Generation failed'
