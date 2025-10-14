@@ -63,18 +63,23 @@ async function convertImageTo3D(imageUrl: string): Promise<string> {
     });
 
     // The result object has a complex structure, we need to find the model URL.
-    // Based on typical Gradio responses for file outputs, it might be in `result.data[1].path`.
     if (result.data && Array.isArray(result.data) && result.data.length > 1) {
       const modelData = result.data[1];
-      if (modelData && modelData.path) {
-        return modelData.path;
+      // The model URL is sometimes in `path`, sometimes in `url`. Check both.
+      const modelUrl = modelData?.path || modelData?.url;
+      if (modelUrl) {
+        return modelUrl;
       }
     }
 
-    throw new Error('Image-to-3D conversion failed: Could not find model URL in Gradio response.');
+    // If we reach here, the model URL was not found. Log the full response for debugging.
+    console.error("Gradio response did not contain model URL. Full response:", JSON.stringify(result, null, 2));
+    throw new Error('Image-to-3D conversion failed: Could not find model URL in the API response.');
+
   } catch (error) {
     console.error("Gradio Client Error:", error);
-    throw new Error(`Image-to-3D conversion failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+    throw new Error(`Image-to-3D conversion failed: ${errorMessage}`);
   }
 }
 
