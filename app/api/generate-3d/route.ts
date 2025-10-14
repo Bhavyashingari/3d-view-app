@@ -49,13 +49,14 @@ async function convertImageTo3D(imageUrl: string): Promise<string> {
 
   try {
     const imageBlob = await fetch(imageUrl).then(r => r.blob());
+    const imageFile = new File([imageBlob], "input.png", { type: imageBlob.type });
 
     const app = await gradioClient("stabilityai/stable-fast-3d", {
       token: huggingFaceToken as `hf_${string}`
     });
 
     const result = await app.predict("/run_button", {
-      input_image: imageBlob,
+      input_image: imageFile,
       foreground_ratio: 0.85,
       remesh_option: "None",
       vertex_count: -1,
