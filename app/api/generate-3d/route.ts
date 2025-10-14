@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import axios from 'axios';
-import OpenAI from "@azure/openai";
+import { AzureOpenAI } from "openai";
+import { client as gradioClient } from "@gradio/client";
 
 // Ensure you have these environment variables set in your Vercel project
 const azureEndpoint = process.env.AZURE_OPENAI_ENDPOINT!;
@@ -17,16 +17,22 @@ async function generateImageWithAzureDalle(prompt: string): Promise<string> {
     throw new Error("Azure OpenAI environment variables are not configured.");
   }
 
-  const client = new OpenAI.OpenAIClient(azureEndpoint, new OpenAI.AzureKeyCredential(azureApiKey));
+  const client = new AzureOpenAI({
+    apiKey: azureApiKey,
+    endpoint: azureEndpoint,
+    apiVersion: "2024-05-01-preview",
+  });
   
-  const response = await client.getImages(dalleDeploymentName, prompt, {
+  const response = await client.images.generate({
+    model: dalleDeploymentName,
+    prompt,
     n: 1,
     size: "1024x1024",
     quality: "hd",
     style: "vivid",
   });
 
-  const imageUrl = response.data[0]?.url;
+  const imageUrl = response.data?.[0]?.url;
   if (!imageUrl) {
     throw new Error("Image generation failed: No URL returned from Azure DALL-E.");
   }
@@ -41,24 +47,40 @@ async function convertImageTo3D(imageUrl: string): Promise<string> {
     throw new Error("Hugging Face token is not configured.");
   }
 
-  const imageBlob = await fetch(imageUrl).then(r => r.blob());
-  const formData = new FormData();
-  formData.append('image', imageBlob, 'input.png');
+  try {
+    const imageBlob = await fetch(imageUrl).then(r => r.blob());
 
-  const response = await axios.post(
-    'https://hf.space/embed/stabilityai/stable-fast-3d/api/predict',
-    formData,
-    {
-      headers: { 'Authorization': `Bearer ${huggingFaceToken}` },
-      timeout: 180000, // 3 minutes
+    const app = await gradioClient("stabilityai/stable-fast-3d", {
+      token: huggingFaceToken as `hf_${string}`
+    });
+
+    const result = await app.predict("/run_button", {
+      input_image: imageBlob,
+      foreground_ratio: 0.85,
+      remesh_option: "None",
+      vertex_count: -1,
+      texture_size: 1024,
+    });
+
+    // The result object has a complex structure, we need to find the model URL.
+    if (result.data && Array.isArray(result.data) && result.data.length > 1) {
+      const modelData = result.data[1];
+      // The model URL is sometimes in `path`, sometimes in `url`. Check both.
+      const modelUrl = modelData?.path || modelData?.url;
+      if (modelUrl) {
+        return modelUrl;
+      }
     }
-  );
 
-  const glbUrl = response.data?.data?.[0]?.url || response.data?.data?.[0];
-  if (!glbUrl) {
-    throw new Error('Image-to-3D conversion failed: No model URL in response.');
+    // If we reach here, the model URL was not found. Log the full response for debugging.
+    console.error("Gradio response did not contain model URL. Full response:", JSON.stringify(result, null, 2));
+    throw new Error('Image-to-3D conversion failed: Could not find model URL in the API response.');
+
+  } catch (error) {
+    console.error("Gradio Client Error:", error);
+    const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+    throw new Error(`Image-to-3D conversion failed: ${errorMessage}`);
   }
-  return glbUrl;
 }
 
 /**
@@ -66,7 +88,8 @@ async function convertImageTo3D(imageUrl: string): Promise<string> {
  */
 export async function POST(request: Request) {
   try {
-    let { prompt, imageUrl } = await request.json();
+    const { prompt, imageUrl: initialImage } = await request.json();
+    let imageUrl = initialImage; // Allow imageUrl to be reassigned
 
     if (!prompt && !imageUrl) {
       return NextResponse.json({ error: 'A text prompt or an image URL is required.' }, { status: 400 });
