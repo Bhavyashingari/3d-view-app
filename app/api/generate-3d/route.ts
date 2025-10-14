@@ -53,7 +53,7 @@ async function convertImageTo3D(imageUrl: string): Promise<string> {
     formData.append('file', imageBlob, 'input.png');
 
     // 2. Upload the image to Tripo3D to get an image ID
-    const uploadResponse = await fetch('https://api.tripo3d.ai/v2/upload', {
+    const uploadResponse = await fetch('https://api.tripo3d.ai/v2/openapi/upload', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${tripoApiKey}` },
       body: formData,
@@ -65,7 +65,7 @@ async function convertImageTo3D(imageUrl: string): Promise<string> {
     const imageId = uploadData.data.id;
 
     // 3. Start the image-to-model conversion task
-    const taskResponse = await fetch('https://api.tripo3d.ai/v2/conversion/image-to-model', {
+    const taskResponse = await fetch('https://api.tripo3d.ai/v2/openapi/task', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${tripoApiKey}`,
@@ -83,7 +83,7 @@ async function convertImageTo3D(imageUrl: string): Promise<string> {
     let finalResult;
     for (let i = 0; i < 60; i++) { // Poll for 5 minutes max (60 * 5s)
       await new Promise(resolve => setTimeout(resolve, 5000));
-      const pollResponse = await fetch(`https://api.tripo3d.ai/v2/tasks/${taskId}`, {
+      const pollResponse = await fetch(`https://api.tripo3d.ai/v2/openapi/tasks/${taskId}`, {
         headers: { 'Authorization': `Bearer ${tripoApiKey}` },
       });
       const pollData = await pollResponse.json();
@@ -137,12 +137,6 @@ export async function POST(request: Request) {
     } else {
       console.log(`Using provided image URL: ${imageUrl}`);
     }
-
-    // --- DIAGNOSTIC: Force a static public image to test Gradio client ---
-    const diagnosticImageUrl = "https://raw.githubusercontent.com/gradio-app/gradio/main/test/test_files/bus.png";
-    console.log(`DIAGNOSTIC OVERRIDE: Using static image URL: ${diagnosticImageUrl}`);
-    imageUrl = diagnosticImageUrl;
-    // --- END DIAGNOSTIC ---
 
     // 2. Convert the image (either provided or newly generated) to a 3D model
     console.log('Converting image to 3D model...');
