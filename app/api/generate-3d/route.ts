@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import axios from 'axios';
-import OpenAI from "@azure/openai";
+import { AzureOpenAI } from "openai";
 
 // Ensure you have these environment variables set in your Vercel project
 const azureEndpoint = process.env.AZURE_OPENAI_ENDPOINT!;
@@ -17,16 +17,22 @@ async function generateImageWithAzureDalle(prompt: string): Promise<string> {
     throw new Error("Azure OpenAI environment variables are not configured.");
   }
 
-  const client = new OpenAI.OpenAIClient(azureEndpoint, new OpenAI.AzureKeyCredential(azureApiKey));
+  const client = new AzureOpenAI({
+    apiKey: azureApiKey,
+    endpoint: azureEndpoint,
+    deployment: dalleDeploymentName,
+    apiVersion: "2024-05-01-preview",
+  });
   
-  const response = await client.getImages(dalleDeploymentName, prompt, {
+  const response = await client.images.generate({
+    prompt,
     n: 1,
     size: "1024x1024",
     quality: "hd",
     style: "vivid",
   });
 
-  const imageUrl = response.data[0]?.url;
+  const imageUrl = response.data?.[0]?.url;
   if (!imageUrl) {
     throw new Error("Image generation failed: No URL returned from Azure DALL-E.");
   }
@@ -66,7 +72,8 @@ async function convertImageTo3D(imageUrl: string): Promise<string> {
  */
 export async function POST(request: Request) {
   try {
-    let { prompt, imageUrl } = await request.json();
+    const { prompt, imageUrl: initialImage } = await request.json();
+    let imageUrl = initialImage; // Allow imageUrl to be reassigned
 
     if (!prompt && !imageUrl) {
       return NextResponse.json({ error: 'A text prompt or an image URL is required.' }, { status: 400 });
