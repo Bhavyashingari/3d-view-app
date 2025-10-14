@@ -91,9 +91,9 @@ export default function Home() {
         <div className="mt-8 p-4 bg-blue-50 rounded-lg">
           <h3 className="font-semibold text-blue-900 mb-2"> Tips for best results:</h3>
           <ul className="text-sm text-blue-800 space-y-1">
-            <li>• Be specific: "red sports car" not just "car"</li>
-            <li>• Mention style: "low poly tree", "realistic robot"</li>
-            <li>• Include details: "Iron Man Mark 42 armor, red and gold"</li>
+            <li>• Be specific: &quot;red sports car&quot; not just &quot;car&quot;</li>
+            <li>• Mention style: &quot;low poly tree&quot;, &quot;realistic robot&quot;</li>
+            <li>• Include details: &quot;Iron Man Mark 42 armor, red and gold&quot;</li>
           </ul>
         </div>
       </div>
