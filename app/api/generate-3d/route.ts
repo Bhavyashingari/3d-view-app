@@ -48,13 +48,7 @@ async function convertImageTo3D(imageUrl: string): Promise<string> {
   }
 
   try {
-    console.log(`Fetching image from URL: ${imageUrl}`);
-    const imageResponse = await fetch(imageUrl);
-    if (!imageResponse.ok) {
-      throw new Error(`Failed to fetch image. Status: ${imageResponse.status}`);
-    }
-    const imageBlob = await imageResponse.blob();
-    console.log(`Successfully fetched image and converted to blob. Size: ${imageBlob.size} bytes`);
+    const imageBlob = await fetch(imageUrl).then(r => r.blob());
 
     const app = await gradioClient("stabilityai/stable-fast-3d", {
       token: huggingFaceToken as `hf_${string}`
