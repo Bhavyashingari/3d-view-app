@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import axios from 'axios';
 import { AzureOpenAI } from "openai";
+import { client as gradioClient } from "@gradio/client";
 
 // Ensure you have these environment variables set in your Vercel project
 const azureEndpoint = process.env.AZURE_OPENAI_ENDPOINT!;
@@ -47,24 +47,35 @@ async function convertImageTo3D(imageUrl: string): Promise<string> {
     throw new Error("Hugging Face token is not configured.");
   }
 
-  const imageBlob = await fetch(imageUrl).then(r => r.blob());
-  const formData = new FormData();
-  formData.append('image', imageBlob, 'input.png');
+  try {
+    const imageBlob = await fetch(imageUrl).then(r => r.blob());
 
-  const response = await axios.post(
-    'https://hf.space/embed/stabilityai/stable-fast-3d/api/predict',
-    formData,
-    {
-      headers: { 'Authorization': `Bearer ${huggingFaceToken}` },
-      timeout: 180000, // 3 minutes
+    const app = await gradioClient("stabilityai/stable-fast-3d", {
+      token: huggingFaceToken as `hf_${string}`
+    });
+
+    const result = await app.predict("/run_button", {
+      input_image: imageBlob,
+      foreground_ratio: 0.85,
+      remesh_option: "None",
+      vertex_count: -1,
+      texture_size: 1024,
+    });
+
+    // The result object has a complex structure, we need to find the model URL.
+    // Based on typical Gradio responses for file outputs, it might be in `result.data[1].path`.
+    if (result.data && Array.isArray(result.data) && result.data.length > 1) {
+      const modelData = result.data[1];
+      if (modelData && modelData.path) {
+        return modelData.path;
+      }
     }
-  );
 
-  const glbUrl = response.data?.data?.[0]?.url || response.data?.data?.[0];
-  if (!glbUrl) {
-    throw new Error('Image-to-3D conversion failed: No model URL in response.');
+    throw new Error('Image-to-3D conversion failed: Could not find model URL in Gradio response.');
+  } catch (error) {
+    console.error("Gradio Client Error:", error);
+    throw new Error(`Image-to-3D conversion failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
-  return glbUrl;
 }
 
 /**
