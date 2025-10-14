@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@azure/openai": "^2.0.0",
+    "@gradio/client": "^2.0.0-dev.0",
     "@mediapipe/camera_utils": "^0.3.1675466862",
     "@mediapipe/drawing_utils": "^0.3.1675466124",
     "@mediapipe/hands": "^0.4.1675469240",
@@ -18,6 +19,7 @@
     "@react-three/xr": "^6.6.27",
     "axios": "^1.12.2",
     "next": "15.5.5",
+    "openai": "^6.3.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "three": "^0.180.0",
