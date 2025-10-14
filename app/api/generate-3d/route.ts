@@ -20,11 +20,11 @@ async function generateImageWithAzureDalle(prompt: string): Promise<string> {
   const client = new AzureOpenAI({
     apiKey: azureApiKey,
     endpoint: azureEndpoint,
-    deployment: dalleDeploymentName,
     apiVersion: "2024-05-01-preview",
   });
   
   const response = await client.images.generate({
+    model: dalleDeploymentName,
     prompt,
     n: 1,
     size: "1024x1024",
