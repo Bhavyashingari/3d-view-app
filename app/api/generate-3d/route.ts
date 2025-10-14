@@ -106,6 +106,12 @@ export async function POST(request: Request) {
       console.log(`Using provided image URL: ${imageUrl}`);
     }
 
+    // --- DIAGNOSTIC: Force a static public image to test Gradio client ---
+    const diagnosticImageUrl = "https://raw.githubusercontent.com/gradio-app/gradio/main/test/test_files/bus.png";
+    console.log(`DIAGNOSTIC OVERRIDE: Using static image URL: ${diagnosticImageUrl}`);
+    imageUrl = diagnosticImageUrl;
+    // --- END DIAGNOSTIC ---
+
     // 2. Convert the image (either provided or newly generated) to a 3D model
     console.log('Converting image to 3D model...');
     const modelUrl = await convertImageTo3D(imageUrl);
