@@ -4,7 +4,6 @@
 import { useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useStore } from '@/lib/store';
-import { generate3DModel } from '@/lib/3d-generation';
 import ViewportView from '@/components/ViewportView';
 import Controls from '@/components/Controls';
 import GestureDetector from '@/components/GestureDetector';
