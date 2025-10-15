@@ -71,7 +71,7 @@ async function convertImageTo3D(imageUrl: string): Promise<string> {
         'Authorization': `Bearer ${tripoApiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ image_id: imageId, type: 'image_to_model' }),
+      body: JSON.stringify({ type: "image_to_model", file_id: imageId }),
     });
     const taskData = await taskResponse.json();
     if (!taskResponse.ok) {
